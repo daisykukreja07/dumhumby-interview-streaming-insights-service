@@ -1,0 +1,17 @@
+# Production environment configuration
+logging:
+  level:
+    root: WARN
+    com.example.insights: INFO
+    org.springframework.web: WARN
+    org.springframework.data.redis: WARN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: never
+

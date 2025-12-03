@@ -1,0 +1,52 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: shopstream-insights-api
+    
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    timeout: 3000
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 2
+        max-wait: -1ms
+      shutdown-timeout: 100ms
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:your-secret-key-must-be-at-least-256-bits-long-for-HS256-algorithm-please-change-this-in-production}
+
+# ClickHouse configuration
+clickhouse:
+  url: ${CLICKHOUSE_URL:jdbc:clickhouse://localhost:8123/shopstream}
+  username: ${CLICKHOUSE_USERNAME:default}
+  password: ${CLICKHOUSE_PASSWORD:}
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.example.insights: DEBUG
+    org.springframework.web: INFO
+    org.springframework.data.redis: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/insights-api.log
+    max-size: 10MB
+    max-history: 30
+
+# Management and Monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized

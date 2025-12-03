@@ -1,0 +1,25 @@
+# Development environment configuration
+logging:
+  level:
+    root: DEBUG
+    com.example.insights: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.data.redis: DEBUG
+
+spring:
+  redis:
+    host: localhost
+    port: 6379
+
+clickhouse:
+  url: jdbc:clickhouse://localhost:8123/shopstream_dev
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"  # Expose all endpoints in dev
+  endpoint:
+    health:
+      show-details: always
+
