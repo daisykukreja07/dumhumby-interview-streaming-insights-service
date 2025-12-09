@@ -17,6 +17,13 @@ spring:
         max-wait: -1ms
       shutdown-timeout: 100ms
 
+# Redis cache configuration
+redis:
+  cache:
+    # Cache TTL in ISO-8601 duration format (e.g., PT1H = 1 hour, PT30M = 30 minutes)
+    # Default: 1 hour
+    ttl: ${REDIS_CACHE_TTL:PT1H}
+
 # JWT Configuration
 jwt:
   secret: ${JWT_SECRET:your-secret-key-must-be-at-least-256-bits-long-for-HS256-algorithm-please-change-this-in-production}

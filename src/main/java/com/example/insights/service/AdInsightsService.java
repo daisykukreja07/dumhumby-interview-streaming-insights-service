@@ -45,23 +45,30 @@ public class AdInsightsService {
     private long fetchMetric(String metricType, String campaignId) {
         logger.debug("Fetching metric {} for campaign {}", metricType, campaignId);
         
-        // 1. Try Redis for real-time
-        Long redisValue = redisRepo.getMetric(campaignId, metricType);
-        if (redisValue != null) {
-            logger.debug("Found metric {} in Redis for campaign {}: {}", metricType, campaignId, redisValue);
-            return redisValue;
+        // 1. Check Redis cache first (cache-aside pattern)
+        Long cachedValue = redisRepo.getMetric(campaignId, metricType);
+        if (cachedValue != null) {
+            logger.debug("Cache hit: Found metric {} in Redis for campaign {}: {}", metricType, campaignId, cachedValue);
+            return cachedValue;
         }
-        logger.debug("Metric {} not found in Redis for campaign {}, falling back to ClickHouse", metricType, campaignId);
+        
+        logger.debug("Cache miss: Metric {} not found in Redis for campaign {}, querying ClickHouse", metricType, campaignId);
 
-        // 2. Fallback to ClickHouse for historical
+        // 2. Cache miss - query ClickHouse (source of truth, written by Apache Flink)
         Long chValue = clickhouseRepo.getMetric(campaignId, metricType);
-        if (chValue != null) {
-            logger.debug("Found metric {} in ClickHouse for campaign {}: {}", metricType, campaignId, chValue);
-            return chValue;
+        if (chValue == null) {
+            logger.warn("Campaign {} not found for metric {} in ClickHouse", campaignId, metricType);
+            throw new CampaignNotFoundException("Campaign " + campaignId + " not found.");
         }
 
-        logger.warn("Campaign {} not found for metric {} in both Redis and ClickHouse", campaignId, metricType);
-        throw new CampaignNotFoundException("Campaign " + campaignId + " not found.");
+        logger.debug("Found metric {} in ClickHouse for campaign {}: {}", metricType, campaignId, chValue);
+
+        // 3. Populate Redis cache with the result for future requests
+        // Cache only the final, most frequently accessed metrics
+        redisRepo.saveMetric(campaignId, metricType, chValue);
+        logger.debug("Cached metric {} for campaign {} in Redis: {}", metricType, campaignId, chValue);
+
+        return chValue;
     }
 
     private void validateCampaignId(String campaignId) {
